@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class MaskController : MonoBehaviour
 {
-    private const int BLOB_RADIUS = 40;
+    public int BlobRadius = 40;
     private RenderTexture cracksMaskRenderTexture;
     private Texture2D cracksMaskTexture;
     public Vector2Int[] crackBlob;
@@ -41,11 +41,11 @@ public class MaskController : MonoBehaviour
 
         foreach (var blob in crackBlob)
         {
-            for (int x = Mathf.Max(blob.x - BLOB_RADIUS, 0); x < Mathf.Min(blob.x + BLOB_RADIUS, cracksMaskTexture.width); x++)
+            for (int x = Mathf.Max(blob.x - BlobRadius, 0); x < Mathf.Min(blob.x + BlobRadius, cracksMaskTexture.width); x++)
             {
-                for (int y = Mathf.Max(blob.y - BLOB_RADIUS, 0); y < Mathf.Min(blob.y + BLOB_RADIUS, cracksMaskTexture.height); y++)
+                for (int y = Mathf.Max(blob.y - BlobRadius, 0); y < Mathf.Min(blob.y + BlobRadius, cracksMaskTexture.height); y++)
                 {
-                    if (Vector2.Distance(new Vector2(x, y), blob) < BLOB_RADIUS)
+                    if (Vector2.Distance(new Vector2(x, y), blob) < BlobRadius)
                     {
                         cracksMaskTexture.SetPixel(x, y, new Color(1, 0, 0));
                     }

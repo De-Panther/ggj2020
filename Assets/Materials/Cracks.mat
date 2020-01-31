@@ -40,7 +40,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 0c97715c62fd9ed409832fd6e8834722, type: 3}
+        m_Texture: {fileID: 2800000, guid: 731e30655f19b634ab134d9ed4d77849, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MaskTex:
@@ -56,7 +56,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OpacityTex:
-        m_Texture: {fileID: 2800000, guid: 078b917ccf163fe4a8f351188977090b, type: 3}
+        m_Texture: {fileID: 8400000, guid: 3740be9319ca0cc46a240a68c4adaea4, type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ParallaxMap:

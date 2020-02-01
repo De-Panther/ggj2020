@@ -5,18 +5,46 @@ using UnityEngine.Assertions;
 
 public class ShootGlueManager : MonoBehaviour
 {
-    [SerializeField] private float speedHorizontal = 2.0f;
-    [SerializeField] private float speedVertical = 2.0f;
-    [SerializeField] private float yaw;
-    [SerializeField] private float pitch;
+    public SplashesOfGluePool splashDecalPool;
+    public Gradient particleColorGradient;
+    public LayerMask wallsMask;
 
-    // Update is called once per frame
-    void Update()
+    private ParticleSystem glueDropplets;
+    private List<ParticleCollisionEvent> glueCollisionEvents;
+
+
+    void Start()
     {
+        glueDropplets = GetComponentInChildren<ParticleSystem>();
+        glueCollisionEvents = new List<ParticleCollisionEvent>();
+    }
+    void Update()
+    { 
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        if (Physics.Raycast(ray))
+        {
+            {
+                if(Input.GetMouseButton(0))
+                {
+                    glueDropplets.gameObject.transform.LookAt(ray.direction);
+                    ParticleSystem.MainModule mainModule = glueDropplets.main;
+                    mainModule.startColor = particleColorGradient.Evaluate(Random.Range(0, 1));
 
-        yaw += speedHorizontal * Input.GetAxis("Mouse X");
-        pitch -= speedVertical * Input.GetAxis("Mouse Y");
+                    glueDropplets.Emit(1);
+                }
+            }
+        }
+    }
 
-        transform.eulerAngles = new Vector3(pitch, yaw, 0f);
+
+    private void OnParticleCollision(GameObject other)
+    {
+        ParticlePhysicsExtensions.GetCollisionEvents(glueDropplets, other, glueCollisionEvents);
+
+        for (int i = 0; i < glueCollisionEvents.Count; i++)
+        {
+            Debug.Log("is collided");
+            splashDecalPool.ParticleHit(glueCollisionEvents[i], particleColorGradient);
+        }
     }
 }

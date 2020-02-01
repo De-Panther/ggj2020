@@ -178,7 +178,7 @@ let polyfill = new WebXRPolyfill();
           hasOrientation: true,
           hasPosition: true,
           orientation: this.GLQuaternionToUnity([orientation.x, orientation.y, orientation.z, orientation.w]),
-          position: this.GLVec3ToUnity([orientation.x, orientation.y, orientation.z]),
+          position: this.GLVec3ToUnity([position.x, position.y, position.z]),
           linearAcceleration: [0, 0, 0],
           linearVelocity: [0, 0, 0]
         });

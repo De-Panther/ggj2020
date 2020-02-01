@@ -193,21 +193,7 @@ public class WebXRController : MonoBehaviour
         {
             SetVisible(true);
 
-            Quaternion sitStandRotation = WebXRMatrixUtil.GetRotationFromMatrix(this.sitStand);
-            Quaternion rotation = sitStandRotation * orientation;
-
-            if (!hasPosition || this.simulate3dof) {
-                position = applyArmModel(
-                    this.sitStand.MultiplyPoint(this.headPosition),
-                    rotation,
-                    this.headRotation);
-            }
-            else
-            {
-                position = this.sitStand.MultiplyPoint(position);
-            }
-
-            transform.rotation = rotation;
+            transform.rotation = orientation;
             transform.position = position;
 
             UpdateButtons(buttonValues);

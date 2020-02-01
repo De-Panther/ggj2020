@@ -17,11 +17,19 @@ public class LevelManagerScript : MonoBehaviour
     {
         CreateBlobGameObjects();
 
-        List<GameObject> blobs = new List<GameObject>(blobToRelativePosition.Keys);
-        //blobs[Random.Range(0, blobs.Count - 1)].GetComponent<BlobScript>().CrackState = 100;
-        blobs[673].GetComponent<BlobScript>().CrackState = 100;
-
         InvokeRepeating("UpdateBlobsMask", 0f, 0.05f);
+        InvokeRepeating("AddRandomCrack", 0f, 5f);
+    }
+
+    private void AddRandomCrack()
+    {
+        List<GameObject> blobs = new List<GameObject>(blobToRelativePosition.Keys);
+        var blobScript = blobs[Random.Range(0, blobs.Count - 1)].GetComponent<BlobScript>();
+
+        if (blobScript.CrackState == 0)
+        {
+            blobScript.CrackState = 1;
+        }
     }
 
     private void CreateBlobGameObjects()
@@ -47,7 +55,7 @@ public class LevelManagerScript : MonoBehaviour
                         {
                             alphaSum += pixels[x + y * Cracks.width].a;
 
-                            if (alphaSum > Mathf.Pow(blobSize, 2) / 400f)
+                            if (alphaSum > Mathf.Pow(blobSize, 2) / 300f)
                             {
                                 hasFound = true;
                                 break;

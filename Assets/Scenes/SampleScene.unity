@@ -224,13 +224,12 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1574779}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: eb841e1c409cdd34fb72e8065ae5ac84, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   BlobRadius: 40
-  crackBlob: []
 --- !u!1 &337283789
 GameObject:
   m_ObjectHideFlags: 0

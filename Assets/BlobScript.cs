@@ -17,7 +17,7 @@ public class BlobScript : MonoBehaviour
         if (CrackState > 0)
         {
             CrackState += 1.5f;
-            CrackState = Mathf.Min(CrackState, 100);
+            CrackState = Mathf.Min(CrackState, 200);
 
             if (Random.Range(0, 100) * 10 < CrackState)
             {

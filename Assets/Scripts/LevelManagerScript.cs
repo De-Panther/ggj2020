@@ -17,8 +17,28 @@ public class LevelManagerScript : MonoBehaviour
     {
         CreateBlobGameObjects();
 
+        InvokeRepeating("UpdateBlobsState", 0f, 0.2f);
         InvokeRepeating("UpdateBlobsMask", 0f, 0.05f);
         InvokeRepeating("AddRandomCrack", 0f, 5f);
+    }
+
+    private void UpdateBlobsState()
+    {
+        foreach (var blob in blobToRelativePosition.Keys)
+        {
+            var blobScript = blob.GetComponent<BlobScript>();
+
+            if (blobScript.CrackState > 0)
+            {
+                blobScript.CrackState += 3f;
+                blobScript.CrackState = Mathf.Min(blobScript.CrackState, 200);
+
+                if (Random.Range(0, 100) * 10 < blobScript.CrackState)
+                {
+                    InfectNearbyBlob(blob);
+                }
+            }
+        }
     }
 
     private void AddRandomCrack()
@@ -80,7 +100,6 @@ public class LevelManagerScript : MonoBehaviour
             float relativeY = blob.y / (float)Cracks.height;
             blobToRelativePosition.Add(blobObject, new Vector2(relativeX, relativeY));
             blobObject.transform.localPosition = new Vector3((relativeX - .5f) * 10 * Ceiling.transform.localScale.x, 0, (relativeY - .5f) * 10);
-            blobObject.GetComponent<BlobScript>().ShouldInfect += BlobScript_ShouldInfect;
         }
     }
 

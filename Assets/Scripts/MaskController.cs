@@ -54,22 +54,17 @@ public class MaskController : MonoBehaviour
         }
 
         RenderTexture.active = cracksMaskRenderTexture;
-        cracksMaskTexture.ReadPixels(new Rect(0, 0, cracksMaskRenderTexture.width, cracksMaskRenderTexture.height), 0, 0);
-
         for (int x = 0; x < cracksMaskRenderTexture.width; x++)
         {
             for (int y = 0; y < cracksMaskRenderTexture.height; y++)
             {
                 cracksMaskTexture.SetPixel(x, y, new Color(1, 0, 0, cracksMap[x,y] / 100f));
             }
-        }
-        
+        }        
         cracksMaskTexture.Apply();
         RenderTexture.active = null;
 
         RenderTexture.active = moldMaskRenderTexture;
-        moldMaskTexture.ReadPixels(new Rect(0, 0, moldMaskRenderTexture.width, moldMaskRenderTexture.height), 0, 0);
-
         for (int x = 0; x < moldMaskRenderTexture.width; x++)
         {
             for (int y = 0; y < moldMaskRenderTexture.height; y++)
@@ -77,7 +72,6 @@ public class MaskController : MonoBehaviour
                 moldMaskTexture.SetPixel(x, y, new Color(1, 0, 0, moldMap[x, y] / 100f));
             }
         }
-
         moldMaskTexture.Apply();
         RenderTexture.active = null;
     }

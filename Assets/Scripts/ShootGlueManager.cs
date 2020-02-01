@@ -23,10 +23,12 @@ public class ShootGlueManager : MonoBehaviour
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         if (Physics.Raycast(ray))
         {
+            Debug.DrawRay(transform.position, ray.direction);
             {
                 if(Input.GetMouseButton(0))
                 {
-                    glueDropplets.gameObject.transform.LookAt(ray.direction);
+                    var targetPoint = ray.GetPoint(10 - transform.position.y);  // 10 = ceiling height
+                    glueDropplets.transform.rotation = Quaternion.LookRotation(targetPoint - transform.position);
                     ParticleSystem.MainModule mainModule = glueDropplets.main;
                     mainModule.startColor = particleColorGradient.Evaluate(Random.Range(0, 1));
 

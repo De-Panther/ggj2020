@@ -193,8 +193,8 @@ public class WebXRController : MonoBehaviour
         {
             SetVisible(true);
 
-            transform.rotation = orientation;
-            transform.position = position;
+            transform.localRotation = orientation;
+            transform.localPosition = position;
 
             UpdateButtons(buttonValues);
             this.axes = axesValues;

@@ -81,7 +81,9 @@ let polyfill = new WebXRPolyfill();
   }
 
   XRManager.prototype.onEndSession = function (session) {
-    session.end();
+    if (session && session.end) {
+      session.end();
+    }
     this.xrSession = null;
     this.gameInstance.SendMessage(this.unityObjectName, 'OnEndXR');
     this.isPresenting = false;
@@ -329,12 +331,13 @@ let polyfill = new WebXRPolyfill();
   }
 
   function init() {
-    if (!navigator.xr) {
+    if (typeof(navigator.xr) == 'undefined') {
       var script = document.createElement('script');
       script.src = 'https://cdn.jsdelivr.net/npm/webxr-polyfill@latest/build/webxr-polyfill.js';
       document.getElementsByTagName('head')[0].appendChild(script);
 
       script.addEventListener('load', function () {
+        console.log(navigator.xr);
         initWebXRManager();
       });
 
@@ -343,8 +346,8 @@ let polyfill = new WebXRPolyfill();
       });
     }
 
-    initWebXRManager();
+    //initWebXRManager();
   }
 
-  init();
+  initWebXRManager();
 })();

@@ -5,15 +5,12 @@ using UnityEngine.Assertions;
 
 public class ShootGlueManager : MonoBehaviour
 {
-    private ParticleLouncher particleLouncher;
+    public ParticleLouncher particleLouncher;
+    public Camera mainCamera;
 
-    private void Start()
-    {
-        particleLouncher = GetComponentInChildren<ParticleLouncher>();
-    }
     void Update()
     { 
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
         if (Physics.Raycast(ray))
         {
             Debug.DrawRay(transform.position, ray.direction);

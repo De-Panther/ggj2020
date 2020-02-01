@@ -28,7 +28,8 @@ public class WebXRCamera : MonoBehaviour
         cameraL = GameObject.Find("CameraL").GetComponent<Camera>();
         cameraR = GameObject.Find("CameraR").GetComponent<Camera>();
 
-        cameraMain.transform.Translate(new Vector3(0, WebXRManager.Instance.DefaultHeight, 0));
+        //cameraMain.transform.Translate(new Vector3(0, WebXRManager.Instance.DefaultHeight, 0));
+        //var newPos = cameraMain.transform.localPosition;
     }
 
     void Update()

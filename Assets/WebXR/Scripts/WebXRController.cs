@@ -219,12 +219,12 @@ public class WebXRController : MonoBehaviour
     }
 
     private void SetVisible(bool visible) {
-        Renderer[] rendererComponents = GetComponentsInChildren<Renderer>();
+        /*Renderer[] rendererComponents = GetComponentsInChildren<Renderer>();
         {
             foreach (Renderer component in rendererComponents) {
                 component.enabled = visible;
             }
-        }
+        }*/
     }
 
     // Arm model adapted from: https://github.com/aframevr/aframe/blob/master/src/components/tracked-controls.js

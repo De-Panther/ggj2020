@@ -7,6 +7,7 @@ public class ShootGlueManager : MonoBehaviour
 {
     public ParticleLouncher particleLouncher;
     public Camera mainCamera;
+    public WebXRController webXRController;
 
     void Update()
     { 
@@ -15,7 +16,7 @@ public class ShootGlueManager : MonoBehaviour
         {
             Debug.DrawRay(transform.position, ray.direction);
             {
-                if(Input.GetMouseButton(0))
+                if(Input.GetMouseButton(0) || webXRController.GetButton("Trigger"))
                 {
                     var targetPoint = ray.GetPoint(10 - transform.position.y);  // 10 = ceiling height
                     particleLouncher.isShooting = true;

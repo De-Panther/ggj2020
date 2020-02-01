@@ -3,27 +3,40 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity WebGL Player | %UNITY_WEB_NAME%</title>
+    <title>Unity WebGL Player | ggj2020</title>
     <link rel="shortcut icon" href="TemplateData/favicon.ico">
     <link rel="stylesheet" href="TemplateData/style.css">
     <script src="TemplateData/UnityProgress.js"></script>
-    <script src="%UNITY_WEBGL_LOADER_URL%"></script>
+    <script src="Build/UnityLoader.js"></script>
     <script>
-      UnityLoader.SystemInfo.mobile = false;
-      var unityInstance = UnityLoader.instantiate("unityContainer", "%UNITY_WEBGL_BUILD_URL%", {onProgress: UnityProgress});
+      UnityLoader.compatibilityCheck = function (unityInstance, onsuccess, onerror) {
+        if (!UnityLoader.SystemInfo.hasWebGL) {
+          unityInstance.popup('Your browser does not support WebGL',
+            [{text: 'OK', callback: onerror}]);
+        } else if (['Edge', 'Firefox', 'Chrome', 'Safari'].indexOf(UnityLoader.SystemInfo.browser) == -1 && UnityLoader.SystemInfo.os != 'iOS') {
+          unityInstance.popup([
+            UnityLoader.SystemInfo.os,
+            UnityLoader.SystemInfo.browser,
+            'No support for Unity WebGL content'
+          ].join(' '), [{text: 'OK', callback: onsuccess}]);
+        } else {
+          onsuccess();
+        }
+      }
+      var unityInstance = UnityLoader.instantiate("unityContainer", "Build/webxr_build.json", {onProgress: UnityProgress});
     </script>
   </head>
   <body>
     <div class="webgl-content">
-      <div id="unityContainer" style="width: %UNITY_WIDTH%px; height: %UNITY_HEIGHT%px"></div>
+      <div id="unityContainer" style="width: 960px; height: 600px"></div>
       <div class="footer">
         <div class="webgl-logo"></div>
         <div class="fullscreen" onclick="unityInstance.SetFullscreen(1)"></div>
-        <div class="title">%UNITY_WEB_NAME%</div>
-		<button id="entervr" value="Enter VR"></button>
+        <div class="title">ggj2020</div>
       </div>
+      <button id="entervr" value="Enter VR" style="width: 300px; height: 50px;"></button>
     </div>
-	<script src="gl-matrix-min.js"></script>
-	<script src="webxr.js"></script>
+    <script src="gl-matrix-min.js"></script>
+    <script type="module" src="webxr.js"></script>
   </body>
 </html>

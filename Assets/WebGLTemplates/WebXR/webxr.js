@@ -1,3 +1,6 @@
+import WebXRPolyfill from '/webxr-polyfill/build/webxr-polyfill.module.js';
+let polyfill = new WebXRPolyfill();
+
 (function () {
   'use strict';
 
@@ -13,35 +16,32 @@
 
   function XRManager() {
     this.enterVRButton = document.getElementById('entervr');
-    this.gameContainer = document.getElementById('game');
-    // Rendering resolution scale
-    this.scaleResolution = 1;
+    this.gameContainer = document.getElementById('unityContainer');
+
     // Unity GameObject name which we will SendMessage to
     this.unityObjectName = 'WebXRCameraSet';
 
     this.xrSession = null;
     this.xrData = new XRData();
     this.canvas = null;
+    this.ctx = null;
     this.gameInstance = null;
     this.polyfill = null;
     this.toggleVRKeyName = '';
-    this.wasPresenting = false;
+    this.isPresenting = false;
+    this.isXrSupported = false;
+    this.xrRefSpace = null;
     this.init();
   }
 
   XRManager.prototype.init = async function () {
-    if (window.WebXRPolyfill) {
-      this.polyfill = new WebXRPolyfill();
-    }
 
     this.attachEventListeners();
 
-    await this.getVRDisplay();
-    if (this.vrDisplay) {
-      // Unity drives its rendering from the window `rAF`. We reassign to use `VRDisplay`'s `rAF` when presenting
-      // such that Unity renders at the VR display's proper framerate.
-      window.requestAnimationFrame = this.requestAnimationFrame.bind(this);
-    }
+    navigator.xr.isSessionSupported('immersive-vr').then((supported) => {
+      this.isXrSupported = supported;
+      this.enterVRButton.dataset.enabled = true;
+    });
   }
 
   XRManager.prototype.requestAnimationFrame = function(cb) {
@@ -51,15 +51,11 @@
   }
 
   XRManager.prototype.attachEventListeners = function () {
-    var onResize = this.resize.bind(this);
     var onToggleVr = this.toggleVr.bind(this);
     var onKeyUp = this.keyUp.bind(this);
-    var onActivate = this.activate.bind(this);
     var onUnityLoaded = this.unityLoaded.bind(this);
     var onUnityMessage = this.unityMessage.bind(this);
 
-    window.addEventListener('vrdisplayactivate', onActivate);
-    window.addEventListener('resize', onResize, true);
     window.addEventListener('keyup', onKeyUp, false);
 
     // dispatched by index.html
@@ -69,58 +65,33 @@
     this.enterVRButton.addEventListener('click', onToggleVr, false);
   }
 
-  XRManager.prototype.resize = function () {
-    if (!this.canvas) return;
-
-    if (this.vrDisplay && this.vrDisplay.isPresenting) {
-      var leftEye = this.vrDisplay.getEyeParameters('left');
-      var rightEye = this.vrDisplay.getEyeParameters('right');
-      var renderWidth = Math.max(leftEye.renderWidth, rightEye.renderWidth) * 2 * this.scaleResolution;
-      var renderHeight = Math.max(leftEye.renderHeight, rightEye.renderHeight) * this.scaleResolution;
-      this.canvas.width = renderWidth;
-      this.canvas.height = renderHeight;
-
-      // scale game container so we get a proper sized mirror of VR content to desktop.
-      if (this.vrDisplay.capabilities.hasExternalDisplay) {
-        var scaleX = window.innerWidth / renderWidth;
-        var scaleY = window.innerHeight / renderHeight;
-        this.gameContainer.setAttribute('style', `transform: scale(${scaleX}, ${scaleY}); transform-origin: top left;`);
-      }
-    } else {
-      this.canvas.width = window.innerWidth;
-      this.canvas.height = window.innerHeight;
-      this.gameContainer.style.transform = '';
-    }
+  XRManager.prototype.onRequestSession = function () {
+    if (!this.isXrSupported) return;
+    navigator.xr.requestSession('immersive-vr').then( (session) => {this.onSessionStarted(session)});
   }
 
-  XRManager.prototype.requestPresent = function (canvas) {
-    if (!this.vrDisplay) return;
-
-    this.vrDisplay.requestPresent([{ source: canvas }]).then(function () {
-      console.log('Entered VR');
-    }).catch(function (err) {
-      console.error('Unable to enter VR mode: ', err);
-    });
-  }
-
-  XRManager.prototype.exitPresent = function () {
-    if (!this.vrDisplay && !this.vrDisplay.isPresenting) {
+  XRManager.prototype.exitSession = function () {
+    if (!this.xrSession) {
       console.warn('No VR display to exit VR mode');
       return;
     }
 
-    return this.vrDisplay.exitPresent().then(function () {
-      console.log('Exited VR');
-    }).catch(function (err) {
-      console.error('Unable to exit VR mode:', err);
-    });
+    this.xrSession.end();
+    this.xrSession = null;
+  }
+
+  XRManager.prototype.onEndSession = function (session) {
+    session.end();
+    this.xrSession = null;
+    this.gameInstance.SendMessage(this.unityObjectName, 'OnEndXR');
+    this.isPresenting = false;
   }
 
   XRManager.prototype.toggleVr = function () {
-    if (this.vrDisplay && this.vrDisplay.isPresenting && this.gameInstance) {
-      this.exitPresent();
+    if (this.isXrSupported && this.xrSession && this.gameInstance) {
+      this.exitSession();
     } else {
-      this.requestPresent(this.canvas);
+      this.onRequestSession();
     }
   }
 
@@ -130,50 +101,11 @@
     }
   }
 
-  XRManager.prototype.activate = async function (evt) {
-    if (!evt.display) {
-      console.error('No `display` property found on event');
-      return;
-    }
-    if (evt.reason && evt.reason !== 'navigation') {
-      console.error("Unexpected `reason` (expected to be 'navigation')")
-      return;
-    }
-    if (!evt.display.capabilities || !evt.display.capabilities.canPresent) {
-      console.error('VR display is not capable of presenting');
-      return;
-    }
-    this.setVRDisplay(evt.display);
-    this.setGameInstance(await this.unityProgressStart);
-    this.requestPresent(this.canvas);
-  }
-
-  XRManager.prototype.setVRDisplay = function(display) {
-    this.vrDisplay = display;
-
-    if (this.vrDisplay.capabilities.canPresent) {
-      this.enterVRButton.dataset.enabled = true;
-    }
-  }
-
-  XRManager.prototype.getVRDisplay = function () {
-    if (this.vrDisplay) {
-      return Promise.resolve(this.vrDisplay);
-    }
-
-    return navigator.getVRDisplays().then(function (displays) {
-      if (!displays.length) {
-        return null;
-      }
-      this.setVRDisplay(displays[displays.length - 1]);
-      return Promise.resolve(this.vrDisplay);
-    }.bind(this));
-  }
-
   XRManager.prototype.setGameInstance = function (gameInstance) {
     if (!this.gameInstance) {
       this.gameInstance = gameInstance;
       this.canvas = this.gameInstance.Module.canvas;
+      this.ctx = this.gameInstance.Module.ctx;
     }
   }
 
@@ -184,27 +116,18 @@
     }, false);
   });
 
-  XRManager.prototype.unityLoaded = async function () {
-    MozillaResearch.telemetry.performance.measure('LoadingTime', 'LoadingStart');
+  XRManager.prototype.unityLoaded = function () {
     document.body.dataset.unityLoaded = 'true';
 
     // Send browser capabilities to Unity.
-    var canPresent = false;
-    var hasPosition = false;
+    var canPresent = this.isXrSupported;
+    var hasPosition = true;
     var hasExternalDisplay = false;
 
-    if (this.vrDisplay) {
-      var capabilities = this.vrDisplay.capabilities
-      canPresent = capabilities.canPresent;
-      hasPosition = capabilities.hasPosition;
-      hasExternalDisplay = capabilities.hasExternalDisplay;
-    }
-
-    this.setGameInstance(await this.unityProgressStart);
-    this.resize();
+    this.setGameInstance(unityInstance);
 
     this.gameInstance.SendMessage(
-      this.unityObjectName, 'OnVRCapabilities',
+      this.unityObjectName, 'OnXRCapabilities',
       JSON.stringify({
         canPresent: canPresent,
         hasPosition: hasPosition,
@@ -302,69 +225,71 @@
     return out;
   }
 
-  XRManager.prototype.animate = function () {
-    if (!this.vrDisplay) {
+  XRManager.prototype.onSessionStarted = function (session) {
+    this.xrSession = session;
+    var onSessionEnded = this.onEndSession.bind(this);
+    session.addEventListener('end', onSessionEnded);
+
+    this.ctx.makeXRCompatible();
+
+    session.updateRenderState({ baseLayer: new XRWebGLLayer(session, this.ctx) });
+
+    session.requestReferenceSpace('local').then((refSpace) => {
+      this.xrRefSpace = refSpace;
+
+      // Inform the session that we're ready to begin drawing.
+      //session.requestAnimationFrame(onXRFrame);
+      window.requestAnimationFrame = this.requestAnimationFrame.bind(this);
+    });
+    this.gameInstance.SendMessage(this.unityObjectName, 'OnStartXR');
+    this.isPresenting = true;
+  }
+
+  XRManager.prototype.animate = function (frame) {
+
+    let pose = frame.getViewerPose(this.xrRefSpace);
+    if (!pose) {
       return;
     }
 
-    if (this.vrDisplay.isPresenting && !this.wasPresenting) {
-      this.gameInstance.SendMessage(this.unityObjectName, 'OnStartVR');
-      this.wasPresenting = true;
-      this.resize();
+    var xrData = this.xrData;
+
+    for (let view of pose.views) {
+      if (view.eye === 'left') {
+        xrData.leftProjectionMatrix = this.GLProjectionToUnity(view.projectionMatrix);
+        xrData.leftViewMatrix = this.GLViewToUnity(view.transform.inverse.matrix);
+      } else if (view.eye === 'right') {
+        xrData.rightProjectionMatrix = this.GLProjectionToUnity(view.projectionMatrix);
+        xrData.rightViewMatrix = this.GLViewToUnity(view.transform.inverse.matrix);
+      } else {
+        xrData.sitStandMatrix = this.GLViewToUnity(view.transform.inverse.matrix);
+      }
     }
-
-    if (!this.vrDisplay.isPresenting && this.wasPresenting) {
-      this.gameInstance.SendMessage(this.unityObjectName, 'OnEndVR');
-      this.wasPresenting = false;
-      this.resize();
-    }
-
-    if (!this.vrDisplay.isPresenting) {
-      return;
-    }
-
-    var vrData = this.vrData;
-    vrData.frameData = new VRFrameData();
-    this.vrDisplay.getFrameData(vrData.frameData);
-
-    vrData.leftProjectionMatrix = this.GLProjectionToUnity(vrData.frameData.leftProjectionMatrix);
-    vrData.rightProjectionMatrix = this.GLProjectionToUnity(vrData.frameData.rightProjectionMatrix);
-    vrData.rightViewMatrix = this.GLViewToUnity(vrData.frameData.rightViewMatrix);
-    vrData.leftViewMatrix = this.GLViewToUnity(vrData.frameData.leftViewMatrix);
-
-    // Sit Stand transform
-    if (this.vrDisplay.stageParameters) {
-      mat4.copy(vrData.sitStandMatrix, this.vrDisplay.stageParameters.sittingToStandingTransform);
-    }
-    mat4.transpose(vrData.sitStandMatrix, vrData.sitStandMatrix);
 
     // Gamepads
-    vrData.gamepads = this.getGamepads(navigator.getGamepads());
 
     // Dispatch event with headset data to be handled in webxr.jslib
-    document.dispatchEvent(new CustomEvent('VRData', { detail: {
-      leftProjectionMatrix: vrData.leftProjectionMatrix,
-      rightProjectionMatrix: vrData.rightProjectionMatrix,
-      leftViewMatrix: vrData.leftViewMatrix,
-      rightViewMatrix: vrData.rightViewMatrix,
-      sitStandMatrix: vrData.sitStandMatrix
+    document.dispatchEvent(new CustomEvent('XRData', { detail: {
+      leftProjectionMatrix: xrData.leftProjectionMatrix,
+      rightProjectionMatrix: xrData.rightProjectionMatrix,
+      leftViewMatrix: xrData.leftViewMatrix,
+      rightViewMatrix: xrData.rightViewMatrix,
+      sitStandMatrix: xrData.sitStandMatrix
     }}));
 
-    gameInstance.SendMessage('WebVRCameraSet', 'OnWebVRData', JSON.stringify({
-      controllers: vrData.gamepads
-    }));
-
-    this.vrDisplay.submitFrame();
+    //gameInstance.SendMessage(this.unityObjectName, 'OnWebXRData', JSON.stringify({
+    //  controllers: vrData.gamepads
+    //}));
   }
 
   XRManager.prototype.unityMessage = function (msg) {
-      var animate = this.animate.bind(this);
+      var boundAnimate = this.animate.bind(this);
 
       if (typeof msg.detail === 'string') {
         // Wait for Unity to render the frame; then submit the frame to the VR display.
         if (msg.detail === 'PostRender') {
-          if (this.vrDisplay && this.vrDisplay.isPresenting) {
-            this.vrDisplay.requestAnimationFrame(animate);
+          if (this.xrSession) {
+            this.xrSession.requestAnimationFrame((t, frame) => {boundAnimate(frame)});
           }
         }
 
@@ -377,7 +302,9 @@
       // Handle UI dialogue
       if (msg.detail.type === 'displayElementId') {
         var el = document.getElementById(msg.detail.id);
-        this.displayElement(el);
+        if (el) {
+          this.displayElement(el);
+        }
       }
   }
 

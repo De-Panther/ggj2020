@@ -18,11 +18,12 @@ mergeInto(LibraryManager.library, {
 
   InitSharedArray: function(byteOffset, length) {
     SharedArray = new Float32Array(buffer, byteOffset, length);
+    document.dispatchEvent(new CustomEvent('UnityLoaded', {detail: 'Ready'}));
   },
 
-  ListenWebVRData: function() {
+  ListenWebXRData: function() {
     // Listen for headset updates from webxr.jspre and load data into shared Array which we pick up in Unity.
-    document.addEventListener('VRData', function(evt) {
+    document.addEventListener('XRData', function(evt) {
       var data = evt.detail;
 
       Object.keys(data).forEach(function (key, i) {

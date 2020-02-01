@@ -4,12 +4,14 @@ using UnityEngine;
 
 public class ParticleLouncher : MonoBehaviour
 {
-    [SerializeField] private ParticleSystem glueDropplets;
-    [SerializeField] private ParticleSystem splatterParticles;
+    public SplashesOfGluePool splashDecalPool;
+    public Gradient particleColorGradient;
 
-    List<ParticleCollisionEvent> glueCollisionEvents;
+    private ParticleSystem glueDropplets;
+    private List<ParticleCollisionEvent> glueCollisionEvents;
     void Start()
     {
+        glueDropplets = GetComponent<ParticleSystem>();
         glueCollisionEvents = new List<ParticleCollisionEvent>();
     }
 
@@ -18,27 +20,21 @@ public class ParticleLouncher : MonoBehaviour
     {
         if (Input.GetButton("Fire1"))
         {
-            Debug.Log("Fire Glue");
+            ParticleSystem.MainModule mainModule = glueDropplets.main;
+            mainModule.startColor = particleColorGradient.Evaluate(Random.Range(0, 1));
+
             glueDropplets.Emit(1);
         }
     }
-
 
     private void OnParticleCollision(GameObject other)
     {
         ParticlePhysicsExtensions.GetCollisionEvents(glueDropplets, other, glueCollisionEvents);
 
-        for (int i = 0; i < glueCollisionEvents.Count;  i++)
+        for (int i = 0; i < glueCollisionEvents.Count; i++)
         {
-            EmitAtLocation(glueCollisionEvents[i]);
+            Debug.Log("is collided");
+            splashDecalPool.ParticleHit(glueCollisionEvents[i], particleColorGradient);
         }
-
-    }
-
-    private void EmitAtLocation(ParticleCollisionEvent i)
-    {
-        splatterParticles.transform.position = i.intersection;
-        splatterParticles.transform.rotation = Quaternion.LookRotation(i.normal);
-        splatterParticles.Emit(1);
     }
 }

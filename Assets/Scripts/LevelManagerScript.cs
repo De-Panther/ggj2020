@@ -17,9 +17,19 @@ public class LevelManagerScript : MonoBehaviour
     {
         CreateBlobGameObjects();
 
+        InvokeRepeating("UpdateBlobsMask", 0f, 0.05f);
+        InvokeRepeating("AddRandomCrack", 0f, 5f);
+    }
+
+    private void AddRandomCrack()
+    {
         List<GameObject> blobs = new List<GameObject>(blobToRelativePosition.Keys);
-        //blobs[Random.Range(0, blobs.Count - 1)].GetComponent<BlobScript>().CrackState = 100;
-        blobs[673].GetComponent<BlobScript>().CrackState = 100;
+        var blobScript = blobs[Random.Range(0, blobs.Count - 1)].GetComponent<BlobScript>();
+
+        if (blobScript.CrackState == 0)
+        {
+            blobScript.CrackState = 1;
+        }
     }
 
     private void CreateBlobGameObjects()
@@ -45,7 +55,7 @@ public class LevelManagerScript : MonoBehaviour
                         {
                             alphaSum += pixels[x + y * Cracks.width].a;
 
-                            if (alphaSum > Mathf.Pow(blobSize, 2) / 400f)
+                            if (alphaSum > Mathf.Pow(blobSize, 2) / 300f)
                             {
                                 hasFound = true;
                                 break;
@@ -71,8 +81,6 @@ public class LevelManagerScript : MonoBehaviour
             blobToRelativePosition.Add(blobObject, new Vector2(relativeX, relativeY));
             blobObject.transform.localPosition = new Vector3((relativeX - .5f) * 10 * Ceiling.transform.localScale.x, 0, (relativeY - .5f) * 10);
             blobObject.GetComponent<BlobScript>().ShouldInfect += BlobScript_ShouldInfect;
-
-            blobObject.GetComponent<BlobScript>().test = blobs.IndexOf(blob);
         }
     }
 
@@ -80,17 +88,7 @@ public class LevelManagerScript : MonoBehaviour
     {
         InfectNearbyBlob(blob);
     }
-
-    float latestUpdateTime = 0;
-    void Update()
-    {
-        if (Time.time - latestUpdateTime > 0.25f)
-        {
-            latestUpdateTime = Time.time;
-            UpdateBlobsMask();
-        }
-    }
-
+        
     private void UpdateBlobsMask()
     {
         List<Vector3> blobsForMask = new List<Vector3>();

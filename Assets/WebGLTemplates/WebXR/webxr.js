@@ -31,6 +31,7 @@ let polyfill = new WebXRPolyfill();
     this.isPresenting = false;
     this.isXrSupported = false;
     this.xrRefSpace = null;
+    this.bindedRF = false;
     this.init();
   }
 
@@ -158,37 +159,29 @@ let polyfill = new WebXRPolyfill();
     return buttons;
   }
 
-  XRManager.prototype.getGamepads = function(gamepads) {
+  XRManager.prototype.getXRGamepads = function(frame, inputSources) {
     var vrGamepads = []
-    for (var i = 0; i < gamepads.length; ++i) {
-      var gamepad = gamepads[i];
+    for (let inputSource of inputSources) {
+      // Show the input source if it has a grip space
+      if (inputSource.gripSpace && inputSource.gamepad) {
+        let inputPose = frame.getPose(inputSource.gripSpace, this.xrRefSpace);
+        
+        var position = inputPose.transform.position;
+        var orientation = inputPose.transform.orientation;
 
-      if (gamepad) {
-        if (gamepad.pose || gamepad.displayId) {
-          var position = gamepad.pose && gamepad.pose.position;
-          var orientation = gamepad.pose && gamepad.pose.orientation;
-          var linearAcceleration = gamepad.pose && gamepad.pose.linearAcceleration;
-          var linearVelocity = gamepad.pose && gamepad.pose.linearVelocity;
-
-          position = position ? this.GLVec3ToUnity(position) : [0, 0, 0];
-          orientation = orientation ? this.GLQuaternionToUnity(orientation) : [0, 0, 0, 1];
-          linearAcceleration = linearAcceleration ? this.GLVec3ToUnity(linearAcceleration) : [0, 0, 0];
-          linearVelocity = linearVelocity ? this.GLVec3ToUnity(linearVelocity) : [0, 0, 0];
-
-          vrGamepads.push({
-            id: gamepad.id,
-            index: gamepad.index,
-            hand: gamepad.hand,
-            buttons: this.getGamepadButtons(gamepad),
-            axes: this.getGamepadAxes(gamepad),
-            hasOrientation: gamepad.pose.hasOrientation,
-            hasPosition: gamepad.pose.hasPosition,
-            orientation: Array.from(orientation),
-            position: Array.from(position),
-            linearAcceleration: Array.from(linearAcceleration),
-            linearVelocity: Array.from(linearVelocity)
-          });
-        }
+        vrGamepads.push({
+          id: inputSource.gamepad.id,
+          index: inputSource.gamepad.index,
+          hand: inputSource.handedness,
+          buttons: this.getGamepadButtons(inputSource.gamepad),
+          axes: this.getGamepadAxes(inputSource.gamepad),
+          hasOrientation: true,
+          hasPosition: true,
+          orientation: this.GLQuaternionToUnity([orientation.x, orientation.y, orientation.z, orientation.w]),
+          position: this.GLVec3ToUnity([orientation.x, orientation.y, orientation.z]),
+          linearAcceleration: [0, 0, 0],
+          linearVelocity: [0, 0, 0]
+        });
       }
     }
     return vrGamepads;
@@ -241,10 +234,12 @@ let polyfill = new WebXRPolyfill();
 
       // Inform the session that we're ready to begin drawing.
       //session.requestAnimationFrame(onXRFrame);
-      window.requestAnimationFrame = this.requestAnimationFrame.bind(this);
+      if (!this.bindedRF)
+      {
+        this.bindedRF = true;
+        window.requestAnimationFrame = this.requestAnimationFrame.bind(this);
+      }
     });
-    this.gameInstance.SendMessage(this.unityObjectName, 'OnStartXR');
-    this.isPresenting = true;
   }
 
   XRManager.prototype.animate = function (frame) {
@@ -269,6 +264,7 @@ let polyfill = new WebXRPolyfill();
     }
 
     // Gamepads
+    xrData.gamepads = this.getXRGamepads(frame, this.xrSession.inputSources);
 
     // Dispatch event with headset data to be handled in webxr.jslib
     document.dispatchEvent(new CustomEvent('XRData', { detail: {
@@ -278,10 +274,16 @@ let polyfill = new WebXRPolyfill();
       rightViewMatrix: xrData.rightViewMatrix,
       sitStandMatrix: xrData.sitStandMatrix
     }}));
+    
+    if (!this.isPresenting)
+    {
+      this.gameInstance.SendMessage(this.unityObjectName, 'OnStartXR');
+      this.isPresenting = true;
+    }
 
-    //gameInstance.SendMessage(this.unityObjectName, 'OnWebXRData', JSON.stringify({
-    //  controllers: vrData.gamepads
-    //}));
+    this.gameInstance.SendMessage(this.unityObjectName, 'OnWebXRData', JSON.stringify({
+      controllers: xrData.gamepads
+    }));
   }
 
   XRManager.prototype.unityMessage = function (msg) {

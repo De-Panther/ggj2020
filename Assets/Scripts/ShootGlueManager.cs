@@ -5,18 +5,11 @@ using UnityEngine.Assertions;
 
 public class ShootGlueManager : MonoBehaviour
 {
-    public SplashesOfGluePool splashDecalPool;
-    public Gradient particleColorGradient;
-    public LayerMask wallsMask;
+    private ParticleLouncher particleLouncher;
 
-    private ParticleSystem glueDropplets;
-    private List<ParticleCollisionEvent> glueCollisionEvents;
-
-
-    void Start()
+    private void Start()
     {
-        glueDropplets = GetComponentInChildren<ParticleSystem>();
-        glueCollisionEvents = new List<ParticleCollisionEvent>();
+        particleLouncher = GetComponentInChildren<ParticleLouncher>();
     }
     void Update()
     { 
@@ -28,25 +21,14 @@ public class ShootGlueManager : MonoBehaviour
                 if(Input.GetMouseButton(0))
                 {
                     var targetPoint = ray.GetPoint(10 - transform.position.y);  // 10 = ceiling height
-                    glueDropplets.transform.rotation = Quaternion.LookRotation(targetPoint - transform.position);
-                    ParticleSystem.MainModule mainModule = glueDropplets.main;
-                    mainModule.startColor = particleColorGradient.Evaluate(Random.Range(0, 1));
-
-                    glueDropplets.Emit(1);
+                    particleLouncher.isShooting = true;
+                    particleLouncher.glueDropplets.transform.rotation = Quaternion.LookRotation(targetPoint - transform.position);
+                }
+                else
+                {
+                    particleLouncher.isShooting = false;
                 }
             }
-        }
-    }
-
-
-    private void OnParticleCollision(GameObject other)
-    {
-        ParticlePhysicsExtensions.GetCollisionEvents(glueDropplets, other, glueCollisionEvents);
-
-        for (int i = 0; i < glueCollisionEvents.Count; i++)
-        {
-            Debug.Log("is collided");
-            splashDecalPool.ParticleHit(glueCollisionEvents[i], particleColorGradient);
         }
     }
 }

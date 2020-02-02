@@ -1,6 +1,3 @@
-import WebXRPolyfill from '/webxr-polyfill/build/webxr-polyfill.module.js';
-let polyfill = new WebXRPolyfill();
-
 (function () {
   'use strict';
 

@@ -97,6 +97,12 @@
  * THE SOFTWARE.
  */
 
+(function (global, factory) {
+	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+	typeof define === 'function' && define.amd ? define(factory) :
+	(global.WebXRPolyfill = factory());
+}(this, (function () { 'use strict';
+
 const _global = typeof global !== 'undefined' ? global :
                 typeof self !== 'undefined' ? self :
                 typeof window !== 'undefined' ? window : {};
@@ -6108,4 +6114,6 @@ class WebXRPolyfill {
   }
 }
 
-export default WebXRPolyfill;
+return WebXRPolyfill;
+
+})));

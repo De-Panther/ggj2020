@@ -1,31 +1,51 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Assertions;
+﻿using UnityEngine;
 
 public class ShootGlueManager : MonoBehaviour
 {
     public ParticleLouncher particleLouncher;
+    public Transform particleLouncherPivot;
     public Camera mainCamera;
     public WebXRController webXRController;
+    public WebXRManager webXRManager;
+
+    private RaycastHit hit;
+    private Ray ray;
+
+    private bool allowShooting = true;
+
+    void OnEnable()
+    {
+        webXRManager.OnXRChange += OnXRChange;
+    }
+
+    void OnDisable()
+    {
+        webXRManager.OnXRChange -= OnXRChange;
+    }
+
+    void OnXRChange(WebXRState state)
+    {
+        allowShooting = (state == WebXRState.NORMAL);
+        particleLouncherPivot.gameObject.SetActive(!allowShooting);
+    }
 
     void Update()
-    { 
-        Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-        if (Physics.Raycast(ray))
+    {
+        if (!allowShooting)
         {
-            Debug.DrawRay(transform.position, ray.direction);
+            return;
+        }
+        ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+        if (Physics.Raycast(ray, out hit))
+        {
+            particleLouncherPivot.LookAt(hit.point);
+            if (Input.GetMouseButton(0) || webXRController.GetButton("Trigger"))
             {
-                if(Input.GetMouseButton(0) || webXRController.GetButton("Trigger"))
-                {
-                    var targetPoint = ray.GetPoint(10 - transform.position.y);  // 10 = ceiling height
-                    particleLouncher.isShooting = true;
-                    particleLouncher.glueDropplets.transform.rotation = Quaternion.LookRotation(targetPoint - transform.position);
-                }
-                else
-                {
-                    particleLouncher.isShooting = false;
-                }
+                particleLouncher.isShooting = true;
+            }
+            else
+            {
+                particleLouncher.isShooting = false;
             }
         }
     }

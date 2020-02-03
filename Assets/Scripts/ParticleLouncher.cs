@@ -11,10 +11,16 @@ public class ParticleLouncher : MonoBehaviour
     [HideInInspector] public ParticleSystem glueDropplets;
 
     private List<ParticleCollisionEvent> glueCollisionEvents;
+
+    private Vector3 zeroBugFix = Vector3.zero;
+
+    private ParticleSystem.MainModule mainModule;
+
     void Start()
     {
         glueDropplets = GetComponent<ParticleSystem>();
         glueCollisionEvents = new List<ParticleCollisionEvent>();
+        mainModule = glueDropplets.main;
     }
 
     // Update is called once per frame
@@ -22,7 +28,6 @@ public class ParticleLouncher : MonoBehaviour
     {
         if (isShooting)
         {
-            ParticleSystem.MainModule mainModule = glueDropplets.main;
             mainModule.startColor = particleColorGradient.Evaluate(Random.Range(0, 1));
 
             glueDropplets.Emit(1);
@@ -35,8 +40,10 @@ public class ParticleLouncher : MonoBehaviour
 
         for (int i = 0; i < glueCollisionEvents.Count; i++)
         {
-            Debug.Log("is collided");
-            splashDecalPool.ParticleHit(glueCollisionEvents[i], particleColorGradient);
+            if (glueCollisionEvents[i].intersection != zeroBugFix)
+            {
+                splashDecalPool.ParticleHit(glueCollisionEvents[i], particleColorGradient);
+            }
         }
     }
 }

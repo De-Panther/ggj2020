@@ -1,8 +1,6 @@
 using UnityEngine;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine.XR;
 
 public enum WebXRControllerHand { NONE, LEFT, RIGHT };
@@ -35,6 +33,10 @@ public class WebXRController : MonoBehaviour
     public Vector3 eyesToElbow = new Vector3(0.1f, -0.4f, 0.15f);
     [Tooltip("Vector from elbow to hand")]
     public Vector3 elbowHand = new Vector3(0, 0, 0.25f);
+
+
+    public GameObject[] showGOs;
+
     private Matrix4x4 sitStand;
     private float[] axes;
 
@@ -88,7 +90,7 @@ public class WebXRController : MonoBehaviour
     {
         if (UnityEngine.XR.XRDevice.isPresent)
         {
-            foreach(WebXRControllerInput input in inputMap.inputs)
+            foreach (WebXRControllerInput input in inputMap.inputs)
             {
                 if (action == input.actionName && input.unityInputIsButton)
                     return Input.GetButton(input.unityInputName);
@@ -130,7 +132,7 @@ public class WebXRController : MonoBehaviour
         // Use Unity Input Manager when XR is enabled and WebXR is not being used (eg: standalone or from within editor).
         if (UnityEngine.XR.XRDevice.isPresent)
         {
-            foreach(WebXRControllerInput input in inputMap.inputs)
+            foreach (WebXRControllerInput input in inputMap.inputs)
             {
                 if (action == input.actionName && input.unityInputIsButton)
                     return Input.GetButtonDown(input.unityInputName);
@@ -150,7 +152,7 @@ public class WebXRController : MonoBehaviour
         // Use Unity Input Manager when XR is enabled and WebXR is not being used (eg: standalone or from within editor).
         if (UnityEngine.XR.XRDevice.isPresent)
         {
-            foreach(WebXRControllerInput input in inputMap.inputs)
+            foreach (WebXRControllerInput input in inputMap.inputs)
             {
                 if (action == input.actionName && input.unityInputIsButton)
                     return Input.GetButtonUp(input.unityInputName);
@@ -205,10 +207,11 @@ public class WebXRController : MonoBehaviour
     {
         WebXRControllerHand handParsed = WebXRControllerHand.NONE;
 
-        if (!String.IsNullOrEmpty(handValue)) {
+        if (!String.IsNullOrEmpty(handValue))
+        {
             try
             {
-                handParsed = (WebXRControllerHand) Enum.Parse(typeof(WebXRControllerHand), handValue.ToUpper(), true);
+                handParsed = (WebXRControllerHand)Enum.Parse(typeof(WebXRControllerHand), handValue.ToUpper(), true);
             }
             catch
             {
@@ -218,13 +221,13 @@ public class WebXRController : MonoBehaviour
         return handParsed;
     }
 
-    private void SetVisible(bool visible) {
-        /*Renderer[] rendererComponents = GetComponentsInChildren<Renderer>();
+    private void SetVisible(bool visible)
+    {
+        //Transform[] transforms = GetComponentsInChildren<Transform>();
+        foreach (var showGO in showGOs)
         {
-            foreach (Renderer component in rendererComponents) {
-                component.enabled = visible;
-            }
-        }*/
+            showGO.SetActive(visible);
+        }
     }
 
     // Arm model adapted from: https://github.com/aframevr/aframe/blob/master/src/components/tracked-controls.js
@@ -259,7 +262,7 @@ public class WebXRController : MonoBehaviour
                 handNode = XRNode.LeftHand;
 
             if (this.hand == WebXRControllerHand.RIGHT)
-               handNode = XRNode.RightHand;
+                handNode = XRNode.RightHand;
 
             if (this.simulate3dof)
             {
@@ -276,7 +279,7 @@ public class WebXRController : MonoBehaviour
                 transform.rotation = InputTracking.GetLocalRotation(handNode);
             }
 
-            foreach(WebXRControllerInput input in inputMap.inputs)
+            foreach (WebXRControllerInput input in inputMap.inputs)
             {
                 if (!input.unityInputIsButton)
                 {

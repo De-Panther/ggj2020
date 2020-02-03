@@ -38,7 +38,6 @@
 
     navigator.xr.isSessionSupported('immersive-vr').then((supported) => {
       this.isXrSupported = supported;
-      this.enterVRButton.dataset.enabled = true;
     });
   }
 
@@ -125,6 +124,8 @@
     var hasExternalDisplay = false;
 
     this.setGameInstance(unityInstance);
+    
+    this.enterVRButton.disabled = !this.isXrSupported;
 
     this.gameInstance.SendMessage(
       this.unityObjectName, 'OnXRCapabilities',
